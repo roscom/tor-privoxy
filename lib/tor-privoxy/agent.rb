@@ -15,13 +15,15 @@ module TorPrivoxy
     def method_missing method, *args, &block
       begin
         @mechanize.send method, *args, &block
-      rescue Mechanize::ResponseCodeError # 403 etc
+      rescue Mechanize::ResponseCodeError => e # 403 etc
+        pp "#{e}"
         switch_circuit
         retry
       end
     end
 
     def switch_circuit
+      puts "switching circuit"
       localhost = Net::Telnet::new('Host' => @proxy.host, 'Port' => @proxy.control_port,
                                  'Timeout' => @circuit_timeout, 'Prompt' => /250 OK\n/)
       localhost.cmd("AUTHENTICATE \"#{@proxy.pass}\"") { |c| throw "cannot authenticate to Tor!" if c != "250 OK\n" }
